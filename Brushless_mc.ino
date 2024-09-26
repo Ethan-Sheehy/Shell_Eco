@@ -1,5 +1,5 @@
 // variables 
-const int motorpin=9;
+// const int motorpin=9; for brushed motor 
 const int potpin=A0;
 int pot;
 int throttle;
