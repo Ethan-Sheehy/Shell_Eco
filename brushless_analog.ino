@@ -3,18 +3,18 @@
 const int potpin=A0;
 int pot;
 int throttle;
-int U_high = 7;
+int U_high = 11;
+int V_high = 10;
+int W_high = 9;
 int U_low = 6;
-int V_high = 5;
-int V_low = 4;
-int W_high = 3;
-int W_low = 2;
+int V_low = 5;
+int W_low = 3;
 
 void setup() {
   // put your setup code here, to run once:
-  pinMode(8, INPUT);
-  pinMode(9, INPUT);
-  pinMode(10, INPUT);
+  pinMode(2, INPUT);
+  pinMode(4, INPUT);
+  pinMode(7, INPUT);
   pinMode(U_high, OUTPUT);
   pinMode(U_low, OUTPUT);
   pinMode(V_high, OUTPUT);
@@ -35,9 +35,9 @@ void loop() {
   //analogWrite (motorpin,throttle);  //old code for sending potentiometer reading 
   
   //Read Hall Effect 
-  bool A = digitalRead(8); //pin 
-  bool B = digitalRead(9);
-  bool C = digitalRead(10);
+  bool A = digitalRead(2); //pin 
+  bool B = digitalRead(4);
+  bool C = digitalRead(7);
 
   //create integer from 2-7
   unsigned int state = A<<2 | B<<1 | C;
