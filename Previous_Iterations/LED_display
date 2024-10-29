@@ -1,0 +1,78 @@
+int pot = A0; // Potentiometer Pin (analog)
+int fase = 1; // Phase tracking variable
+unsigned long Delay = 4000; // Initial delay (in microseconds)
+unsigned long previousMillis = 0; 
+unsigned long currentMillis = 0;
+
+void setup() {
+  // Set pin modes for LEDs (Pins 2-7)
+  for (int pin = 2; pin <= 7; pin++) {
+    pinMode(pin, OUTPUT);
+    digitalWrite(pin, LOW); // Ensure all LEDs start off
+  }
+
+  pinMode(pot, INPUT); // Potentiometer as input
+}
+
+void loop() 
+{
+  currentMillis = micros();
+  
+  // Update delay using potentiometer reading
+  Delay = map(analogRead(pot), 0, 1023, 1000, 40000); // Convert Delay to microseconds
+
+  if (currentMillis - previousMillis >= Delay) {
+    previousMillis = currentMillis;
+
+    // Turn off all LEDs
+    for (int pin = 2; pin <= 7; pin++) {
+      digitalWrite(pin, LOW);
+    }
+
+    //read my hall effects
+    bool A = digitalRead(8);
+    bool B = digitalRead(9);
+    bool C = digitalRead(10);
+
+    //shift each of those bits into an integer
+    unsigned int state = A<<2 | B<<1 | C;
+
+    // Control which LEDs light up based on the phase
+    switch (fase) {
+      case 1: // Phase 1: Light up Pin 7 and Pin 2
+        digitalWrite(4, HIGH);
+        digitalWrite(3, HIGH);
+        break;
+      case 2: // Phase 2: Light up Pin 7 and Pin 4
+        digitalWrite(6, HIGH);
+        digitalWrite(5, HIGH);
+        break;
+      case 3: // Phase 3: Light up Pin 4 and Pin 3
+        digitalWrite(6, HIGH);
+        digitalWrite(3, HIGH);
+        break;
+      case 4: // Phase 4: Light up Pin 6 and Pin 3
+        digitalWrite(7, HIGH);
+        digitalWrite(2, HIGH);
+        break;
+      case 5: // Phase 5: Light up Pin 6 and Pin 5
+        digitalWrite(7, HIGH);
+        digitalWrite(4, HIGH);
+        break;
+      case 6: // Phase 6: Light up Pin 5 and Pin 2
+        digitalWrite(5, HIGH);
+        digitalWrite(2, HIGH);
+        break;
+      default:
+        //OMG this should never happen. But we'll put code here just in case.
+        // HALT THE COMPUTER....
+        break;
+    }
+
+    // Move to the next phase
+    fase++;
+    if (fase > 6) fase = 1; // Loop back to Phase 1
+  }
+  delay(1);
+
+}
