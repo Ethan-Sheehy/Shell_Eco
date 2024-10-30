@@ -42,6 +42,7 @@ void loop() {
 
 //Shutdown flag
   if (shutdown) {
+    throttle = 0;
     Serial.println("Motor no worko");
     return;
   }
