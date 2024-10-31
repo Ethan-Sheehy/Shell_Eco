@@ -1,4 +1,4 @@
-// variables
+// variables 
 // const int motorpin=9; for brushed motor 
 const int potpin=A0;
 int pot;
@@ -12,8 +12,8 @@ const int W_low = 3;
 
 //Warning variables
 int temp_counter = 0;
-const int TempPin = 1;
-int TempValue = 0;
+const int TempPin = 13;
+unsigned int TempValue = 0;
 
 //Shutdown, shutdown set to false unless warnings flare 
 bool shutdown = false;
@@ -36,22 +36,16 @@ void setup() {
 
 }
 
-const bool DEBUG = 0;  //Used for debug mode, set = 1 to enable 
+const bool DEBUG = 1;  //Used for debug mode, set = 1 to enable 
 void loop() {
   // put your main code here, to run repeatedly:
 
-//Shutdown flag
-  if (shutdown) {
-    throttle = 0;
-    Serial.println("Motor no worko");
-    return;
-  }
 //Check warnings before normal motor settings 
   //Temperature reading
   TempValue = digitalRead(TempPin);
     if (TempValue == HIGH) {
       temp_counter++;
-      if (temp_counter >=10) {
+      if (temp_counter >=2) {
         shutdown = true;
         Serial.println("Shutdown caused by excessive motor temperature");
       }
@@ -73,7 +67,12 @@ void loop() {
   //create integer from 2-7
   unsigned int state = A<<2 | B<<1 | C;
   
-
+//Shutdown flag
+  if (shutdown) {
+    throttle = 0;
+    Serial.println("Motor no worko");
+    return;
+  }
  //Run through states
  //analogwrite(pin,value) 
   switch(state)
@@ -137,7 +136,7 @@ void loop() {
       // Ignore/shutdown 
       break;
   }
-
+  
   long endTime = micros();
 
   long loop_duration = endTime - startTime;
