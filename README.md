@@ -1,2 +1,2 @@
 # Shell_Eco
-Code for the Shell Eco Marathon motor controller 
+Code for the JMU Shell Eco Marathon motor controller 
