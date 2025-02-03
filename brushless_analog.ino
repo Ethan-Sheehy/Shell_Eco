@@ -21,16 +21,15 @@ bool shutdown = false;
 void setup() {
   // Set Timers 
   // Set Timer0 (Pins 5 & 6) to 31kHz
-  TCCR0B = (TCCR0B & 0b11111000) | 0b001; 
+  TCCR0B = TCCR0B & B11111000 | B00000010; 
   
   // Set Timer1 (Pins 9 & 10) 
-  TCCR1B = (TCCR1B & 0b11111000) | 0b001; 
-  TCCR1A = (TCCR1A & 0b00111111) | 0b10000000;
+  TCCR1B = TCCR1B & B11111000 | B00000001;
 
   //Set Timer2 (Pins 3 & 11)
-  TCCR2B = (TCCR2B & 0b11111000) | 0b001;
-  TCCR2A = (TCCR2A & 0b00111111) | 0b00000001; 
-  
+  TCCR2B = TCCR2B & B11111000 | B00000001;
+
+
   // put your setup code here, to run once:
   pinMode(2, INPUT);
   pinMode(4, INPUT);
