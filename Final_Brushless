@@ -1,0 +1,173 @@
+// variables 
+// const int motorpin=9; for brushed motor 
+const int potpin=A0;
+int pot;
+unsigned int throttle;
+const int U_high = 4;//0
+const int V_high = 33; //7
+const int W_high = 6; //24
+const int U_low = 9; //1
+const int V_low = 36; //8
+const int W_low = 37; //25
+
+//Warning variables
+int temp_counter = 0;
+const int TempPin = 13;
+unsigned int TempValue = 0;
+
+//Shutdown, shutdown set to false unless warnings flare 
+bool shutdown = false;
+
+// RPM calculation variables
+unsigned long last_rpm_time = 0;
+int previous_state = 0;
+
+void setup() {
+  // put your setup code here, to run once:
+  pinMode(15, INPUT);
+  pinMode(16, INPUT);
+  pinMode(17, INPUT);
+  pinMode(U_high, OUTPUT);
+  pinMode(U_low, OUTPUT);
+  pinMode(V_high, OUTPUT);
+  pinMode(V_low, OUTPUT);
+  pinMode(W_high, OUTPUT);
+  pinMode(W_low, OUTPUT);
+  Serial.begin(9600);
+
+  analogWriteFrequency(4, 15000);
+  analogWriteFrequency(33, 15000);
+  analogWriteFrequency(6, 15000);
+  analogWriteFrequency(9, 15000);
+  analogWriteFrequency(36, 15000);
+  analogWriteFrequency(37, 15000);
+//Warning setup
+  pinMode(TempPin, INPUT);
+ 
+
+}
+
+const bool DEBUG = 0;  //Used for debug mode, set = 1 to enable 
+void loop() {
+  // put your main code here, to run repeatedly:
+
+//Check warnings before normal motor settings 
+  //Temperature reading
+  TempValue = digitalRead(TempPin);
+    if (TempValue == HIGH) {
+      temp_counter++;
+      if (temp_counter >=2) {
+        shutdown = true;
+        Serial.println("Shutdown caused by excessive motor temperature");
+      }
+    }
+  
+  // long startTime = micros();
+  //count number of defaults 
+//Nomral Motor settings 
+  //long startTime = micros();
+  pot = analogRead (potpin);
+  // convert to 0-255
+  throttle = map(pot,0,1023,0,255);  //limit throttle range after known values 
+  // if (throttle < 50) { 
+    // throttle = 0; 
+    // return; } 
+
+  
+  // set motor speed 
+  //analogWrite (motorpin,throttle);  //old code for sending potentiometer reading 
+  
+  //Read Hall Effect 
+  bool A = digitalRead(15); //pin 
+  bool B = digitalRead(16);
+  bool C = digitalRead(17);
+
+  //create integer from 2-7
+  unsigned int state = A<<2 | B<<1 | C;
+
+  if(state == 6 && previous_state != 6){
+    unsigned long current_rpm_time = micros();
+    unsigned long time_diff = current_rpm_time - last_rpm_time;
+
+    float rpm = (60000000/(time_diff*4));
+
+    Serial.print("RPM: ");
+    Serial.println(rpm);
+    last_rpm_time = current_rpm_time;
+  }
+  previous_state = state;
+
+  
+//Shutdown flag
+  if (shutdown) {
+    throttle = 0;
+    Serial.println("Motor no worko");
+    return;
+  }
+ //Run through states
+ //analogwrite(pin,value) 
+  switch(state)
+  {
+    case 4: //State 1: Phase A on, B off, C off, 100
+      analogWrite(U_high,throttle); 
+      analogWrite(U_low, 0);
+      analogWrite(V_high, 0); //0
+      analogWrite(V_low, 0); 
+      analogWrite(W_high, 0); //0
+      analogWrite(W_low, throttle);
+      if(DEBUG){Serial.println("4");}
+      break;
+    case 5: //State 2: Phase A on, B off, C on, 101
+      analogWrite(U_high,throttle); 
+      analogWrite(U_low, 0);
+      analogWrite(V_high, 0); //0
+      analogWrite(V_low, throttle); 
+      analogWrite(W_high, 0); //0
+      analogWrite(W_low, 0);
+      if(DEBUG){Serial.println("5");}
+      break;
+    case 1: //State 3: Phase A off, B off, C on, 001
+      analogWrite(U_high, 0); //0
+      analogWrite(U_low, 0);
+      analogWrite(V_high, 0); //0
+      analogWrite(V_low, throttle); 
+      analogWrite(W_high,throttle);
+      analogWrite(W_low, 0);
+      if(DEBUG){Serial.println("1");}
+      break;
+    case 3: //State 4: Phase A off, B on, C on, 011
+      analogWrite(U_high, 0); //0
+      analogWrite(U_low, throttle);
+      analogWrite(V_high, 0); //0
+      analogWrite(V_low, 0); 
+      analogWrite(W_high,throttle);
+      analogWrite(W_low, 0);
+      if(DEBUG){Serial.println("3");}
+      break;
+    case 2: //State 5: Phase A off, B on, C off, 010
+      analogWrite(U_high, 0); //0
+      analogWrite(U_low, throttle);
+      analogWrite(V_high,throttle);
+      analogWrite(V_low, 0); 
+      analogWrite(W_high, 0); //0
+      analogWrite(W_low, 0);
+      if(DEBUG){Serial.println("2");}
+      break;
+    case 6: //State 6: Phase A on, B on, C off, 110
+      analogWrite(U_high, 0); //0
+      analogWrite(U_low, 0);
+      analogWrite(V_high,throttle);
+      analogWrite(V_low, 0); 
+      analogWrite(W_high, 0); //0
+      analogWrite(W_low, throttle);
+      if(DEBUG){Serial.println("6");}
+      break;
+    //default:
+      // Set code that can count number of defaults and shut system down with excessive faults 
+      // Ignore/shutdown 
+      //break;
+  }
+  
+  //long endTime = micros();
+  //long loop_duration = endTime - startTime;
+}
