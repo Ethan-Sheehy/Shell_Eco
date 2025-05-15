@@ -1,0 +1,68 @@
+const int motorpin = 9;  // PWM output pin to motor driver
+const int potpin = A0;   // Analog input pin from potentiometer
+
+int potValue;
+int mappedPotValue;
+float currentSpeed = 0;
+
+unsigned long lastUpdate = 0;
+const int loopDuration = 100;  // Time between loop updates (ms)
+
+// === Ramp Configuration ===
+const int maxPWM = 255;
+const int rampTime = 30000;  // Time to go from 0 to maxPWM (30s)
+const float maxRampIncrement = maxPWM / (float)(rampTime / loopDuration);  
+// Max speed increment per update
+
+// === Decay Configuration ===
+// Slower decay when pot decreases slightly, faster decay on big drops
+const float minDecayFactor = 0.05;  // Decay rate for very small drops
+const float maxDecayFactor = 0.5;   // Decay rate for large drops
+
+// === Slam Protection ===
+const int slamThreshold = 50;       // Change above this = slam
+const int maxSlammedPWM = 100;      // Max PWM allowed if slammed
+
+void setup() {
+  pinMode(motorpin, OUTPUT);
+  analogWrite(motorpin, 0);
+}
+
+void loop() {
+  potValue = analogRead(potpin);
+  mappedPotValue = map(potValue, 0, 1023, 0, maxPWM);
+
+  unsigned long now = millis();
+  if (now - lastUpdate >= loopDuration) {
+    lastUpdate = now;
+
+    int delta = mappedPotValue - currentSpeed;
+
+    // === 1. Ramping up ===
+    if (delta > 0) {
+      float rampIncrement = min(delta, maxRampIncrement);
+
+      // If slammed, restrict ramping to avoid instant jump
+      if (delta > slamThreshold) {
+        rampIncrement = min(rampIncrement, maxSlammedPWM - currentSpeed);
+      }
+
+      currentSpeed += rampIncrement;
+
+    // === 2. Ramping down (decay) ===
+    } else if (delta < 0) {
+      float magnitude = abs(delta);
+
+      // Scale decay factor based on magnitude: smaller drops decay slower
+      float decayFactor = minDecayFactor + (maxDecayFactor - minDecayFactor) * (magnitude / maxPWM);
+      decayFactor = constrain(decayFactor, minDecayFactor, maxDecayFactor);
+
+      currentSpeed += delta * decayFactor;
+    }
+
+    // Clamp final speed
+    currentSpeed = constrain(currentSpeed, 0, (float)maxPWM);
+
+    analogWrite(motorpin, (int)currentSpeed);
+  }
+}
